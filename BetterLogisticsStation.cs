@@ -9,7 +9,7 @@ namespace sebdalf
 {
 
     [BepInDependency("me.xiaoye97.plugin.Dyson.LDBTool", BepInDependency.DependencyFlags.HardDependency)]
-    [BepInPlugin("sebdalf.dsp.betterlogisticsstation", "DSP Better Logistics Station", "0.0.0.1")]
+    [BepInPlugin("sebdalf.dsp.betterlogisticsstation", "DSP Better Logistics Station", "1.0.0")]
     [BepInProcess("DSPGAME.exe")]
     public class BetterLogisticsStation: BaseUnityPlugin
     {
