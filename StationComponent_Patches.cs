@@ -3,7 +3,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 
-namespace sebdalf
+namespace SharpChedda
 {
     [HarmonyPatch(typeof(StationComponent))]
     [HarmonyPatch(nameof(StationComponent.Init))]
@@ -11,7 +11,8 @@ namespace sebdalf
     {
         public static void Postfix(StationComponent __instance)
         {
-            __instance.needs = new int[__instance.storage.Length + 1];
+            int newSize = __instance.storage.Length;
+            __instance.needs = new int[newSize + 1];
         }
     }
 
@@ -47,211 +48,7 @@ namespace sebdalf
         }
     }
 
-    [HarmonyPatch(typeof(StationComponent))]
-    [HarmonyPatch(nameof(StationComponent.AddItem))]
-    public static class StationComponent_AddItem_Patch
-    {
-        [HarmonyPrefix]
-        public static bool Prefix(
-            StationComponent __instance,
-            int itemId,
-            int count,
-            int inc,
-            ref int __result)
-        {
-            __result = Custom_AddItem(__instance, itemId, count, inc);
-            return false;
-        }
-        private static int Custom_AddItem(StationComponent __instance, int itemId, int count, int inc)
-        {
-            if (itemId <= 0)
-            {
-                return 0;
-            }
-
-            lock (__instance.storage)
-            {
-                int num = __instance.storage.Length;
-                for (int storageIndex = 0; storageIndex < num; ++storageIndex)
-                {
-                    if (__instance.storage[storageIndex].itemId == itemId)
-                    {
-                        __instance.storage[storageIndex].count = count;
-                        __instance.storage[storageIndex].inc = inc;
-                        return count;
-                    }
-                }
-            }
-
-            return 0;
-        }
-    }
-
-    [HarmonyPatch]
-    public static class StationComponent_TakeItem_Patch
-    {
-        static MethodBase TargetMethod()
-        {
-            return AccessTools.Method(
-                typeof(StationComponent),
-                "TakeItem",
-                new[]
-                {
-                    typeof(int).MakeByRefType(),
-                    typeof(int).MakeByRefType(),
-                    typeof(int[]),
-                    typeof(int).MakeByRefType()
-                }
-            );
-        }
-
-        [HarmonyPrefix]
-        public static bool Prefix(
-            StationComponent __instance,
-            ref int _itemId,
-            ref int _count,
-            int[] _needs,
-            ref int _inc)
-        {
-            Custom_TakeItem(__instance, ref _itemId, ref _count, _needs, out _inc);
-            return false;
-        }
-
-        private static void Custom_TakeItem(StationComponent __instance, ref int _itemId, ref int _count, int[] _needs, out int _inc)
-        {
-            _inc = 0;
-            if (_itemId > 0 && _count > 0 && Utils.IsItemInNeeds(_itemId, _needs))
-            {
-                lock (__instance.storage)
-                {
-                    int num = __instance.storage.Length;
-                    for (int i = 0; i < num; i++)
-                    {
-                        if (__instance.storage[i].itemId == _itemId && __instance.storage[i].count > 0)
-                        {
-                            _count = ((_count < __instance.storage[i].count) ? _count : __instance.storage[i].count);
-                            _itemId = __instance.storage[i].itemId;
-                            _inc = split_inc(ref __instance.storage[i].count, ref __instance.storage[i].inc, _count);
-                            return;
-                        }
-                    }
-                }
-            }
-
-            _itemId = 0;
-            _count = 0;
-            _inc = 0;
-        }
-
-        static private int split_inc(ref int n, ref int m, int p)
-        {
-            if (n == 0)
-            {
-                return 0;
-            }
-
-            int num = m / n;
-            int num2 = m - num * n;
-            n -= p;
-            num2 -= n;
-            num = ((num2 > 0) ? (num * p + num2) : (num * p));
-            m -= num;
-            return num;
-        }
-    }
-
-    [HarmonyPatch(typeof(StationComponent))]
-    [HarmonyPatch(nameof(StationComponent.HasLocalSupply))]
-    public static class StationComponent_HasLocalSupply_Patch
-    {
-        public static bool Prefix(
-            StationComponent __instance,
-            int itemId, int countAtLeast,
-            ref int __result)
-        {
-            int num = __instance.storage.Length;
-            for (int storageIndex = 0; storageIndex < num; ++storageIndex)
-            {
-                if (__instance.storage[storageIndex].itemId == itemId && __instance.storage[storageIndex].localLogic == ELogisticStorage.Supply && __instance.storage[storageIndex].count >= countAtLeast)
-                {
-                    __result = storageIndex;
-                    return false;
-                }
-            }
-
-            return true;
-        }
-    }
-
-    [HarmonyPatch(typeof(StationComponent))]
-    [HarmonyPatch(nameof(StationComponent.HasLocalDemand))]
-    public static class StationComponent_HasLocalDemand_Patch
-    {
-        public static bool Prefix(
-            StationComponent __instance,
-            int itemId, int countAtLeast,
-            ref int __result)
-        {
-            int num = __instance.storage.Length;
-            for (int storageIndex = 0; storageIndex < num; ++storageIndex)
-            {
-                if (__instance.storage[storageIndex].itemId == itemId && __instance.storage[storageIndex].localLogic == ELogisticStorage.Demand && __instance.storage[storageIndex].max - __instance.storage[storageIndex].count >= countAtLeast)
-                {
-                    __result = storageIndex;
-                    return false;
-                }
-            }
-
-            return true;
-        }
-    }
-
-    [HarmonyPatch(typeof(StationComponent))]
-    [HarmonyPatch(nameof(StationComponent.HasRemoteSupply))]
-    public static class StationComponent_HasRemoteSupply_Patch
-    {
-        public static bool Prefix(
-            StationComponent __instance,
-            int itemId, int countAtLeast,
-            ref int __result)
-        {
-            int num = __instance.storage.Length;
-            for (int storageIndex = 0; storageIndex < num; ++storageIndex)
-            {
-                if (__instance.storage[storageIndex].itemId == itemId && __instance.storage[storageIndex].remoteLogic == ELogisticStorage.Supply && __instance.storage[storageIndex].count >= countAtLeast)
-                {
-                    __result = storageIndex;
-                    return false;
-                }
-            }
-
-            return true;
-        }
-    }
-
-    [HarmonyPatch(typeof(StationComponent))]
-    [HarmonyPatch(nameof(StationComponent.HasRemoteDemand))]
-    public static class StationComponent_HasRemoteDemand_Patch
-    {
-        public static bool Prefix(
-            StationComponent __instance,
-            int itemId, int countAtLeast,
-            ref int __result)
-        {
-            int num = __instance.storage.Length;
-            for (int storageIndex = 0; storageIndex < num; ++storageIndex)
-            {
-                if (__instance.storage[storageIndex].itemId == itemId && __instance.storage[storageIndex].remoteLogic == ELogisticStorage.Demand && __instance.storage[storageIndex].max - __instance.storage[storageIndex].count >= countAtLeast)
-                {
-                    __result = storageIndex;
-                    return false;
-                }
-            }
-
-            return true;
-        }
-    }
-
+  
     [HarmonyPatch(typeof(StationComponent))]
     [HarmonyPatch(nameof(StationComponent.UpdateInputSlots))]
     public static class StationComponent_UpdateInputSlots_Patch

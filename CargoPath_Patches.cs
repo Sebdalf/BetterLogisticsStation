@@ -2,7 +2,7 @@
 using System;
 using System.Reflection;
 
-namespace sebdalf
+namespace SharpChedda
 {
     [HarmonyPatch(typeof(CargoPath))]
     [HarmonyPatch(nameof(CargoPath.TryPickItemAtRear))]
