@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace sebdalf
+namespace SharpChedda
 {
     public static class Utils
     {

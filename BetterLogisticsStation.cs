@@ -5,7 +5,7 @@ using BepInEx.Configuration;
 using BepInEx.Logging;
 using xiaoye97;
 
-namespace sebdalf
+namespace SharpChedda
 {
     [BepInDependency("me.xiaoye97.plugin.Dyson.LDBTool", BepInDependency.DependencyFlags.HardDependency)]
     [BepInPlugin("sebdalf.dsp.betterlogisticsstation", "DSP Better Logistics Station", "1.0.0")]
@@ -42,7 +42,6 @@ namespace sebdalf
 
             LDBTool.EditDataAction += Edit;
         }
-
         private void Edit(Proto proto)
         {
             if (proto is ItemProto itemProto && itemProto.prefabDesc != null && itemProto.prefabDesc.isStation)

@@ -3,7 +3,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 
-namespace sebdalf
+namespace SharpChedda
 {
     [HarmonyPatch(typeof(StationComponent))]
     [HarmonyPatch(nameof(StationComponent.Init))]

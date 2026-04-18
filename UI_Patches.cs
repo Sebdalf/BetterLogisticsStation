@@ -1,39 +1,39 @@
 using HarmonyLib;
-using System.Threading.Tasks;
 using UnityEngine;
-using UnityEngine.UI;
-using static System.Net.Mime.MediaTypeNames;
+using System.Reflection;
 
-namespace sebdalf
+namespace SharpChedda
 {
-    [HarmonyPatch(typeof(UIStationWindow))]
-    public static class UIStationWindow_Scrolling_Patch
+    [HarmonyPatch(typeof(UIStationWindow), "_OnOpen")]
+    public static class UIStationWindow_Simple_Patch
     {
-        [HarmonyPatch(typeof(UIStationWindow), "_OnOpen")]
         [HarmonyPostfix]
         public static void OnOpenPostfix(UIStationWindow __instance)
         {
+            FieldInfo groupCountField = typeof(UIStationWindow).GetField("groupCount", BindingFlags.Instance | BindingFlags.NonPublic);
+            FieldInfo stationIdField = typeof(UIStationWindow).GetField("_stationId", BindingFlags.Instance | BindingFlags.NonPublic);
+
+            if (stationIdField == null) return;
+
+            int stationId = (int)stationIdField.GetValue(__instance);
+            if (stationId <= 0) return;
+
+            PlanetFactory factory = GameMain.mainPlayer.factory;
+            StationComponent station = factory.transport.GetStationComponent(stationId);
+            if (station == null) return;
+
+            int itemId = factory.entityPool[station.entityId].protoId;
+            ItemProto proto = LDB.items.Select(itemId);
+            int slotCount = proto.prefabDesc.stationMaxItemKinds;
+
+            if (groupCountField != null) groupCountField.SetValue(__instance, slotCount);
+
             Transform storageGroup = __instance.transform.Find("storage-group");
-            if (storageGroup == null) return;
-
-            ScrollRect scroll = storageGroup.GetComponent<ScrollRect>();
-            if (scroll == null)
+            if (storageGroup != null)
             {
-                scroll = storageGroup.gameObject.AddComponent<ScrollRect>();
-
-                scroll.gameObject.AddComponent<UnityEngine.UI.Image>().color = new Color(0, 0, 0, 0.01f);
-                storageGroup.gameObject.AddComponent<Mask>().showMaskGraphic = false;
-
-                scroll.content = storageGroup.GetComponent<RectTransform>();
-                scroll.horizontal = false;
-                scroll.vertical = true;
-                scroll.movementType = ScrollRect.MovementType.Clamped;
-                scroll.scrollSensitivity = 20f;
+                RectTransform rect = storageGroup.GetComponent<RectTransform>();
+                rect.sizeDelta = new Vector2(rect.sizeDelta.x, (float)slotCount * 76f);
             }
-
-            RectTransform rect = storageGroup.GetComponent<RectTransform>();
-            float slotHeight = 80f;
-            rect.sizeDelta = new Vector2(rect.sizeDelta.x, BetterLogisticsStation.InterstellarLogisticsStationMaxItemKinds.Value * slotHeight);
         }
     }
 }
