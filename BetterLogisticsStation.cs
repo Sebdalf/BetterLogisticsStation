@@ -41,25 +41,18 @@ namespace sebdalf
 
         private void Edit(Proto proto)
         {
-            bool flag = proto is ItemProto;
-            if (flag)
+            if (proto is ItemProto itemProto && itemProto.prefabDesc.isStation)
             {
-                ItemProto itemProto = proto as ItemProto;
-                bool isStation = itemProto.prefabDesc.isStation;
-                if (isStation)
-                {
-                    bool isStellarStation = itemProto.prefabDesc.isStellarStation;
-                    if (isStellarStation)
-                    {
-                        itemProto.prefabDesc.stationMaxItemKinds = BetterLogisticsStation.InterstellarLogisticsStationMaxItemKinds.Value;
-                        itemProto.prefabDesc.stationMaxItemCount = BetterLogisticsStation.InterstellarLogisticsStationMaxItemCount.Value;
-                    }
-                    else
-                    {
-                        itemProto.prefabDesc.stationMaxItemKinds = BetterLogisticsStation.PlanetaryLogisticsStationMaxItemKinds.Value;
-                        itemProto.prefabDesc.stationMaxItemCount = BetterLogisticsStation.PlanetaryLogisticsStationMaxItemCount.Value;
-                    }
-                }
+                int maxSlots = itemProto.prefabDesc.isStellarStation ?
+                    Math.Min(BetterLogisticsStation.InterstellarLogisticsStationMaxItemKinds.Value, 6) :
+                    Math.Min(BetterLogisticsStation.PlanetaryLogisticsStationMaxItemKinds.Value, 6);
+
+                itemProto.prefabDesc.stationMaxItemKinds = maxSlots;
+
+                if (itemProto.prefabDesc.isStellarStation)
+                    itemProto.prefabDesc.stationMaxItemCount = BetterLogisticsStation.InterstellarLogisticsStationMaxItemCount.Value;
+                else
+                    itemProto.prefabDesc.stationMaxItemCount = BetterLogisticsStation.PlanetaryLogisticsStationMaxItemCount.Value;
             }
         }
 
